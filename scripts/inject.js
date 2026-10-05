@@ -34,6 +34,14 @@
       if (window.monaco && window.monaco.editor) {
         const models = window.monaco.editor.getModels();
         if (models && models.length > 0) {
+          let bestCode = '';
+          for (const m of models) {
+            const val = m.getValue();
+            if (val && val.length > bestCode.length) {
+              bestCode = val;
+            }
+          }
+          if (bestCode.trim().length > 0) return bestCode;
           return models[0].getValue();
         }
       }

@@ -54,6 +54,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  /**
+   * Ensure content scripts and main-world hooks are injected in the active tab
+   */
+  async function ensureTabScripts(tabId) {
+    try {
+      const res = await chrome.tabs.sendMessage(tabId, { type: 'PING' });
+      if (res && res.pong) return true;
+    } catch (e) {
+      // Content script not yet active on tab, inject programmatically
+    }
+
+    try {
+      await chrome.scripting.insertCSS({
+        target: { tabId },
+        files: ['styles/toast.css']
+      });
+    } catch (e) {}
+
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: [
+        'scripts/complexity.js',
+        'scripts/github.js',
+        'scripts/content.js'
+      ]
+    });
+
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        world: 'MAIN',
+        files: ['scripts/inject.js']
+      });
+    } catch (e) {}
+
+    // Allow 200ms for event listeners to bind
+    await new Promise(r => setTimeout(r, 200));
+    return true;
+  }
+
   // Manual Sync Button
   const manualSyncBtn = document.getElementById('manual-sync-btn');
   const manualSyncText = document.getElementById('manual-sync-text');
@@ -61,28 +101,61 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   manualSyncBtn?.addEventListener('click', async () => {
     manualSyncBtn.disabled = true;
-    manualSyncText.textContent = 'Syncing...';
+    manualSyncText.textContent = 'Checking settings...';
     manualSyncSpinner?.classList.remove('hidden');
+    showAlert('', 'hidden');
 
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab || !tab.url || !tab.url.includes('leetcode.com/problems/')) {
-        alert('Please open an active LeetCode problem tab to sync.');
+      // 1. Verify token is configured
+      const settings = await chrome.storage.local.get([
+        'githubToken',
+        'githubUsername',
+        'repoName',
+        'branch'
+      ]);
+
+      if (!settings.githubToken) {
+        showAlert('Please enter and save your GitHub Personal Access Token in Settings first!', 'error');
+        const settingsTabBtn = document.querySelector('[data-tab="settings-tab"]');
+        if (settingsTabBtn) settingsTabBtn.click();
         return;
       }
 
-      await chrome.tabs.sendMessage(tab.id, { type: 'SYNC_CURRENT_PAGE' });
-      manualSyncText.textContent = '⚡ Solution Pushed!';
-      setTimeout(() => {
-        window.close();
-      }, 1200);
+      // 2. Query active tab
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab || !tab.url || (!tab.url.includes('leetcode.com/problems/') && !tab.url.includes('leetcode.cn/problems/'))) {
+        showAlert('Please open an active LeetCode problem tab (e.g. leetcode.com/problems/two-sum/) to sync.', 'error');
+        return;
+      }
+
+      // 3. Ensure content scripts are active on the tab
+      manualSyncText.textContent = 'Connecting to tab...';
+      await ensureTabScripts(tab.id);
+
+      // 4. Send sync request to content script
+      manualSyncText.textContent = 'Scraping & Pushing...';
+      const response = await chrome.tabs.sendMessage(tab.id, { type: 'SYNC_CURRENT_PAGE' });
+
+      if (!response || !response.success) {
+        throw new Error(response?.error || 'Failed to sync. Please make sure you have submitted the question on LeetCode first.');
+      }
+
+      manualSyncText.textContent = `⚡ Pushed Solution ${response.solutionNum || 1}!`;
+      showAlert(`🎉 Successfully synced "${response.title || 'problem'}" (Solution ${response.solutionNum || 1}) to ${settings.githubUsername || 'AyushSinha2210'}/${settings.repoName || 'Leetcode_Sync'}!`, 'success');
+
+      // Refresh dashboard view with updated activity
+      const { syncHistory = [] } = await chrome.storage.local.get('syncHistory');
+      renderDashboard(syncHistory, settings.githubUsername || 'AyushSinha2210', settings.repoName || 'Leetcode_Sync');
+
     } catch (e) {
-      console.warn('Manual sync message error:', e);
-      alert('Could not trigger sync on tab. Please refresh the LeetCode tab once and try again.');
+      console.warn('[LeetCode Sync] Manual sync message error:', e);
+      showAlert(`Sync failed: ${e.message || 'Could not trigger sync on tab.'}`, 'error');
     } finally {
       manualSyncBtn.disabled = false;
-      manualSyncText.textContent = '⚡ Sync Current LeetCode Solution';
       manualSyncSpinner?.classList.add('hidden');
+      setTimeout(() => {
+        manualSyncText.textContent = '⚡ Sync Current LeetCode Solution';
+      }, 4000);
     }
   });
 

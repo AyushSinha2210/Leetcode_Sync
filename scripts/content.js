@@ -58,61 +58,228 @@
     observer.observe(document.body, { childList: true, subtree: true });
   } catch (e) {}
 
-  // 3. Listen for manual sync commands from extension popup
+  // 3. Listen for commands from extension popup
   chrome.runtime.onMessage?.addListener((request, sender, sendResponse) => {
+    if (request.type === 'PING') {
+      sendResponse({ pong: true });
+      return true;
+    }
     if (request.type === 'SYNC_CURRENT_PAGE') {
-      triggerSyncFromCurrentPage().then(() => sendResponse({ success: true }));
+      triggerSyncFromCurrentPage()
+        .then(result => sendResponse(result || { success: true }))
+        .catch(err => sendResponse({ success: false, error: err.message }));
       return true;
     }
   });
+
+  /**
+   * Fetch user's latest accepted submission directly from LeetCode's authenticated GraphQL
+   */
+  async function fetchLatestAcceptedSubmission(questionSlug) {
+    if (!questionSlug) return null;
+
+    try {
+      const graphqlUrl = window.location.origin.includes('leetcode.cn')
+        ? 'https://leetcode.cn/graphql/'
+        : 'https://leetcode.com/graphql';
+
+      const csrfMatch = document.cookie.match(/csrftoken=([^;]+)/);
+      const csrfToken = csrfMatch ? csrfMatch[1] : '';
+
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      if (csrfToken) {
+        headers['x-csrftoken'] = csrfToken;
+      }
+
+      // 1. Get submission list for this question
+      const listQuery = `
+        query Submissions($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!) {
+          submissionList(offset: $offset, limit: $limit, lastKey: $lastKey, questionSlug: $questionSlug) {
+            lastKey
+            hasNext
+            submissions {
+              id
+              statusDisplay
+              lang
+              runtime
+              timestamp
+              url
+              isPending
+              memory
+            }
+          }
+        }
+      `;
+
+      const listRes = await fetch(graphqlUrl, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          query: listQuery,
+          variables: {
+            offset: 0,
+            limit: 10,
+            lastKey: null,
+            questionSlug
+          }
+        })
+      });
+
+      if (!listRes.ok) return null;
+      const listData = await listRes.json();
+      const subs = listData?.data?.submissionList?.submissions;
+      if (!Array.isArray(subs) || subs.length === 0) return null;
+
+      const accepted = subs.find(s => s && s.statusDisplay === 'Accepted');
+      if (!accepted) return null;
+
+      // 2. Get submission details (plural: submissionDetails) for the accepted submission
+      const detailQuery = `
+        query submissionDetails($submissionId: Int!) {
+          submissionDetails(submissionId: $submissionId) {
+            runtime
+            runtimeDisplay
+            runtimePercentile
+            memory
+            memoryDisplay
+            memoryPercentile
+            code
+            timestamp
+            statusCode
+            lang {
+              name
+              verboseName
+            }
+          }
+        }
+      `;
+
+      const detailRes = await fetch(graphqlUrl, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          query: detailQuery,
+          variables: {
+            submissionId: parseInt(accepted.id, 10)
+          }
+        })
+      });
+
+      if (!detailRes.ok) return null;
+      const detailData = await detailRes.json();
+      const detail = detailData?.data?.submissionDetails;
+
+      if (detail && detail.code) {
+        return {
+          id: accepted.id,
+          code: detail.code,
+          lang: detail.lang?.name || accepted.lang || 'python3',
+          runtime: detail.runtimeDisplay || `${accepted.runtime || detail.runtime || ''}`.trim(),
+          runtimePercentile: detail.runtimePercentile || null,
+          memory: detail.memoryDisplay || `${accepted.memory || detail.memory || ''}`.trim(),
+          memoryPercentile: detail.memoryPercentile || null,
+          status: 'Accepted'
+        };
+      }
+    } catch (err) {
+      console.warn('[LeetCode Sync] fetchLatestAcceptedSubmission error:', err);
+    }
+
+    return null;
+  }
 
   /**
    * Scrape current editor code and page metadata to trigger sync
    */
   async function triggerSyncFromCurrentPage() {
     const slugMatch = window.location.pathname.match(/\/problems\/([^\/]+)/);
-    if (!slugMatch) return;
+    if (!slugMatch) {
+      return { success: false, error: 'Could not detect problem slug from current URL.' };
+    }
     const slug = slugMatch[1];
 
-    let runtime = '';
-    let memory = '';
-    let runtimePercentile = null;
-    let memoryPercentile = null;
+    const settings = await chrome.storage.local.get([
+      'githubToken',
+      'githubUsername',
+      'repoName',
+      'branch'
+    ]);
 
-    const pageText = document.body.innerText || '';
-    const runtimeMatch = pageText.match(/Runtime\s*[:：]?\s*([0-9]+\s*(?:ms|s))/i);
-    if (runtimeMatch) runtime = runtimeMatch[1];
-
-    const memoryMatch = pageText.match(/Memory\s*[:：]?\s*([0-9.]+\s*(?:MB|KB|GB))/i);
-    if (memoryMatch) memory = memoryMatch[1];
-
-    const beatsMatch = pageText.match(/Beats\s*([0-9.]+)%/i);
-    if (beatsMatch) runtimePercentile = parseFloat(beatsMatch[1]);
-
-    const code = await getCodeFromEditor();
-    if (!code || code.trim().length === 0) {
-      console.warn('[LeetCode Sync] Could not extract code from editor.');
-      return;
+    const token = settings.githubToken;
+    if (!token) {
+      showToast({
+        status: 'error',
+        title: 'LeetCode Sync: Token Needed',
+        message: 'Please paste your GitHub Personal Access Token in the LeetCode Sync extension popup settings.',
+        solutionNum: null,
+        timeComplexity: null,
+        spaceComplexity: null
+      });
+      return { success: false, error: 'GitHub Token is missing. Please save it in extension settings.' };
     }
 
-    const lang = detectLanguage();
+    // Step 1: Try fetching the authenticated user's latest accepted submission from LeetCode GraphQL
+    console.log('[LeetCode Sync] Checking LeetCode submission history for:', slug);
+    let subData = await fetchLatestAcceptedSubmission(slug);
+
+    // Step 2: Fallback to editor DOM if no submission found via GraphQL (e.g. user hasn't submitted yet)
+    if (!subData || !subData.code) {
+      console.log('[LeetCode Sync] No submission from GraphQL, falling back to editor DOM...');
+      const editorCode = await getCodeFromEditor();
+      if (!editorCode || editorCode.trim().length === 0) {
+        return {
+          success: false,
+          error: 'No accepted submission found for this problem, and the code editor is empty. Please submit your solution on LeetCode first!'
+        };
+      }
+
+      // Extract runtime/memory from DOM
+      const pageText = document.body.innerText || '';
+      let runtime = '';
+      let memory = '';
+      let runtimePercentile = null;
+      let memoryPercentile = null;
+
+      const runtimeMatch = pageText.match(/(?:Runtime|执行用时)\s*[:：]?\s*([0-9.]+\s*(?:ms|s|毫秒))/i);
+      if (runtimeMatch) runtime = runtimeMatch[1];
+
+      const memoryMatch = pageText.match(/(?:Memory|内存)\s*[:：]?\s*([0-9.]+\s*(?:MB|KB|GB|兆字节))/i);
+      if (memoryMatch) memory = memoryMatch[1];
+
+      const beatsMatch = pageText.match(/(?:Beats|击败)\s*([0-9.]+)%/i);
+      if (beatsMatch) runtimePercentile = parseFloat(beatsMatch[1]);
+
+      subData = {
+        id: `manual-${slug}-${Date.now()}`,
+        code: editorCode,
+        lang: detectLanguage(),
+        runtime: runtime || '4 ms',
+        runtimePercentile,
+        memory: memory || '14.2 MB',
+        memoryPercentile,
+        status: 'Accepted'
+      };
+    }
+
     const payload = {
-      submissionId: `sync-${slug}-${Date.now()}`,
+      submissionId: subData.id,
       status: 'Accepted',
-      runtime: runtime || '4 ms',
-      runtimePercentile,
-      memory: memory || '14.2 MB',
-      memoryPercentile,
-      lang,
-      code,
+      runtime: subData.runtime,
+      runtimePercentile: subData.runtimePercentile,
+      memory: subData.memory,
+      memoryPercentile: subData.memoryPercentile,
+      lang: subData.lang,
+      code: subData.code,
       slug
     };
 
-    if (processedSubmissions.has(payload.submissionId)) return;
-    processedSubmissions.add(payload.submissionId);
-
-    console.log('[LeetCode Sync] Auto-triggering sync for:', payload);
-    await handleAcceptedSubmission(payload);
+    console.log('[LeetCode Sync] Executing sync with payload:', payload);
+    const result = await handleAcceptedSubmission(payload);
+    return result || { success: true };
   }
 
   /**
@@ -287,6 +454,15 @@
         source: complexity.source
       });
 
+      return {
+        success: true,
+        solutionNum: pushResult.solutionNum,
+        title: questionMeta.title,
+        commitUrl: pushResult.commitUrl,
+        timeComplexity: complexity.timeComplexity,
+        spaceComplexity: complexity.spaceComplexity
+      };
+
     } catch (err) {
       console.error('[LeetCode Sync] Sync failed:', err);
       showToast({
@@ -297,6 +473,10 @@
         timeComplexity: null,
         spaceComplexity: null
       });
+      return {
+        success: false,
+        error: err.message || 'An error occurred while pushing to GitHub.'
+      };
     }
   }
 
