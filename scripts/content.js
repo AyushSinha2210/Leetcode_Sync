@@ -70,7 +70,7 @@
       return;
     }
 
-    const repoName = settings.repoName || 'Leetcode-Sync';
+    const repoName = settings.repoName || 'Leetcode_Sync';
     const branch = settings.branch || 'main';
 
     // Show initial syncing HUD

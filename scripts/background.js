@@ -14,9 +14,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   ]);
 
   const updates = {};
-  if (!existing.repoName) updates.repoName = 'Leetcode-Sync';
+  if (!existing.repoName) updates.repoName = 'Leetcode_Sync';
   if (!existing.branch) updates.branch = 'main';
-  if (existing.enableAI === undefined) updates.enableAI = true;
+  if (!existing.githubUsername) updates.githubUsername = 'AyushSinha2210';
   if (!existing.syncHistory) updates.syncHistory = [];
 
   if (Object.keys(updates).length > 0) {

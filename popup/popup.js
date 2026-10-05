@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showAlert('', 'hidden');
 
     const token = tokenInput.value.trim();
-    const repoName = repoInput.value.trim() || 'Leetcode-Sync';
+    const repoName = repoInput.value.trim() || 'Leetcode_Sync';
     const branch = branchInput.value.trim() || 'main';
 
     if (!token) {
@@ -138,8 +138,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       statusText.textContent = `@${username}`;
       if (repoBanner && repoFullName && repoLink) {
         repoBanner.classList.remove('hidden');
-        repoFullName.textContent = `${username}/${repoName || 'Leetcode-Sync'}`;
-        repoLink.href = `https://github.com/${username}/${repoName || 'Leetcode-Sync'}`;
+        repoFullName.textContent = `${username}/${repoName || 'Leetcode_Sync'}`;
+        repoLink.href = `https://github.com/${username}/${repoName || 'Leetcode_Sync'}`;
       }
     } else {
       statusBadge.className = 'status-badge disconnected';

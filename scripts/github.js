@@ -515,7 +515,7 @@ ${updatedTable}
   async pushSolution({
     token,
     username,
-    repoName = 'Leetcode-Sync',
+    repoName = 'Leetcode_Sync',
     branch = 'main',
     code,
     lang,
