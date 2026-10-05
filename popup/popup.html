@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LeetCode Sync Pro</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <img src="../icons/icon32.png" alt="Logo" class="logo">
+        <div class="brand-text">
+          <h1>LeetCode Sync</h1>
+          <span class="version">v1.0.0</span>
+        </div>
+      </div>
+      <div id="connection-status-badge" class="status-badge disconnected">
+        <span class="status-dot"></span>
+        <span id="status-text">Disconnected</span>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-btn active" data-tab="dashboard-tab">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-btn" data-tab="settings-tab">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+      <button class="nav-btn" data-tab="guide-tab">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Guide
+      </button>
+    </nav>
+
+    <!-- Tab 1: Dashboard -->
+    <main id="dashboard-tab" class="tab-content active">
+      <!-- Repo Card -->
+      <div id="repo-banner" class="repo-banner hidden">
+        <div class="repo-info">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          <span id="repo-full-name">username/Leetcode-Sync</span>
+        </div>
+        <a id="repo-link" href="#" target="_blank" class="external-link-btn" title="Open repository on GitHub">
+          Open ↗
+        </a>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Total Synced</span>
+          <span id="total-count" class="stat-value">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Easy</span>
+          <span id="easy-count" class="stat-value text-green">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Medium</span>
+          <span id="medium-count" class="stat-value text-orange">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Hard</span>
+          <span id="hard-count" class="stat-value text-red">0</span>
+        </div>
+      </div>
+
+      <!-- Recent Submissions List -->
+      <section class="section">
+        <div class="section-header">
+          <h3>Recent Submissions</h3>
+          <span id="activity-count" class="badge">0</span>
+        </div>
+        <div id="activity-list" class="activity-list">
+          <div class="empty-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <p>No synced problems yet.</p>
+            <span>Solve and submit any problem on LeetCode to see it automatically appear here!</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Tab 2: Settings -->
+    <main id="settings-tab" class="tab-content">
+      <form id="settings-form">
+        <!-- Notification Alert Box -->
+        <div id="alert-box" class="alert-box hidden"></div>
+
+        <!-- GitHub Token -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="github-token">GitHub Personal Access Token <span class="required">*</span></label>
+            <a href="https://github.com/settings/tokens/new?description=LeetCode-Sync-Extension&scopes=repo" target="_blank" class="sublink">Create Token ↗</a>
+          </div>
+          <div class="input-with-action">
+            <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" required>
+            <button type="button" id="toggle-token-visibility" class="icon-toggle-btn" title="Toggle visibility">👁️</button>
+          </div>
+          <span class="input-hint">Requires <code>repo</code> scope to create & commit code.</span>
+        </div>
+
+        <!-- Repository Name -->
+        <div class="form-group">
+          <label for="repo-name">Repository Name</label>
+          <input type="text" id="repo-name" value="Leetcode-Sync" placeholder="Leetcode-Sync" required>
+          <span class="input-hint">Target repository on your GitHub (created automatically if missing).</span>
+        </div>
+
+        <!-- Branch -->
+        <div class="form-group">
+          <label for="branch-name">Branch</label>
+          <input type="text" id="branch-name" value="main" placeholder="main" required>
+        </div>
+
+        <!-- Gemini AI Settings -->
+        <div class="form-section-title">
+          <span>AI Complexity Analysis (Gemini Flash)</span>
+        </div>
+
+        <div class="form-group toggle-group">
+          <div class="toggle-text">
+            <label for="enable-ai-toggle">Enable AI Complexity Analysis</label>
+            <span class="input-hint">Uses Gemini Flash for high-precision Big-O reasoning.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="enable-ai-toggle" checked>
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div id="ai-key-container" class="form-group">
+          <div class="label-row">
+            <label for="gemini-key">Gemini API Key (Optional)</label>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="sublink">Get Free Key ↗</a>
+          </div>
+          <input type="password" id="gemini-key" placeholder="AIzaSy...">
+          <span class="input-hint">If empty, the built-in offline static complexity engine is used.</span>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-actions">
+          <button type="submit" id="save-btn" class="btn-primary">
+            <span id="save-btn-text">Save & Verify Connection</span>
+            <div id="save-spinner" class="spinner hidden"></div>
+          </button>
+        </div>
+      </form>
+    </main>
+
+    <!-- Tab 3: Guide -->
+    <main id="guide-tab" class="tab-content">
+      <div class="guide-card">
+        <h4>🚀 How It Works</h4>
+        <ol class="guide-steps">
+          <li><strong>Configure:</strong> Enter your GitHub Personal Access Token in the Settings tab.</li>
+          <li><strong>Solve:</strong> Open any problem on <a href="https://leetcode.com" target="_blank">LeetCode</a> and click <em>Submit</em>.</li>
+          <li><strong>Automatic Sync:</strong> When Accepted, the extension calculates Time & Space Complexity and commits the solution directly to your GitHub repo.</li>
+        </ol>
+      </div>
+
+      <div class="guide-card">
+        <h4>🔁 Repeated Questions (Multi-Solution)</h4>
+        <p>When you solve a question again (e.g. optimizing or trying a new language/approach), it checks the existing folder and automatically names the new file <code>Solution_2</code>, <code>Solution_3</code>, etc., and updates the comparison table in <code>README.md</code>!</p>
+      </div>
+
+      <div class="guide-card">
+        <h4>⏱️ Time Complexity Analysis</h4>
+        <p>Each solution includes the algorithmic Time and Auxiliary Space Complexity right at the top of the code file, in the problem <code>README.md</code>, in the Git commit message, and in an animated toast on LeetCode!</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="../scripts/complexity.js"></script>
+  <script src="../scripts/github.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
