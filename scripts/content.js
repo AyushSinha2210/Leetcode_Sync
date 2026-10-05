@@ -10,46 +10,175 @@
   let processedSubmissions = new Set();
   let currentToastEl = null;
 
-  // 1. Inject inject.js into the main world DOM
-  try {
-    const s = document.createElement('script');
-    s.src = chrome.runtime.getURL('scripts/inject.js');
-    s.onload = function () {
-      this.remove();
-    };
-    (document.head || document.documentElement).appendChild(s);
-  } catch (err) {
-    console.error('[LeetCode Sync] Failed to inject page hook:', err);
-  }
-
-  // 2. Listen for messages from inject.js
-  window.addEventListener('message', async (event) => {
-    if (event.source !== window || !event.data || event.data.type !== 'LEETCODE_SYNC_ACCEPTED') {
-      return;
-    }
-
-    const payload = event.data.payload;
-    if (!payload || !payload.code) {
-      console.warn('[LeetCode Sync] Empty payload received, ignoring.');
-      return;
-    }
-
+  // 1. Listen for messages and CustomEvents from inject.js
+  const handleAcceptedEvent = async (payload) => {
+    if (!payload || !payload.code) return;
     const subId = payload.submissionId || `${payload.slug}-${Date.now()}`;
-    if (processedSubmissions.has(subId)) {
-      console.log('[LeetCode Sync] Submission already processed:', subId);
-      return;
-    }
+    if (processedSubmissions.has(subId)) return;
     processedSubmissions.add(subId);
 
     console.log('[LeetCode Sync] Processing Accepted submission for:', payload.slug);
     await handleAcceptedSubmission(payload);
+  };
+
+  window.addEventListener('message', (event) => {
+    if (event.data?.type === 'LEETCODE_SYNC_ACCEPTED') {
+      handleAcceptedEvent(event.data.payload);
+    }
   });
+
+  window.addEventListener('LeetCodeSync:Accepted', (e) => handleAcceptedEvent(e.detail));
+  document.addEventListener('LeetCodeSync:Accepted', (e) => handleAcceptedEvent(e.detail));
+
+  // 2. Fallback DOM MutationObserver for "Accepted" banner
+  let lastDomSyncTimestamp = 0;
+  const observer = new MutationObserver(() => {
+    if (Date.now() - lastDomSyncTimestamp < 12000) return;
+
+    // Check if "Accepted" appears in any submission result element
+    const acceptedElements = Array.from(document.querySelectorAll('*')).filter(el => {
+      return el.children.length === 0 && (el.innerText || el.textContent || '').trim() === 'Accepted';
+    });
+
+    for (const el of acceptedElements) {
+      const container = el.closest('[data-e2e-locator="submission-result"], [class*="result"], [class*="submission"], div');
+      if (container) {
+        const text = container.innerText || '';
+        if (/runtime/i.test(text) || /beats/i.test(text) || /memory/i.test(text) || /passed/i.test(text)) {
+          console.log('[LeetCode Sync] DOM MutationObserver detected Accepted banner!');
+          lastDomSyncTimestamp = Date.now();
+          triggerSyncFromCurrentPage();
+          break;
+        }
+      }
+    }
+  });
+
+  try {
+    observer.observe(document.body, { childList: true, subtree: true });
+  } catch (e) {}
+
+  // 3. Listen for manual sync commands from extension popup
+  chrome.runtime.onMessage?.addListener((request, sender, sendResponse) => {
+    if (request.type === 'SYNC_CURRENT_PAGE') {
+      triggerSyncFromCurrentPage().then(() => sendResponse({ success: true }));
+      return true;
+    }
+  });
+
+  /**
+   * Scrape current editor code and page metadata to trigger sync
+   */
+  async function triggerSyncFromCurrentPage() {
+    const slugMatch = window.location.pathname.match(/\/problems\/([^\/]+)/);
+    if (!slugMatch) return;
+    const slug = slugMatch[1];
+
+    let runtime = '';
+    let memory = '';
+    let runtimePercentile = null;
+    let memoryPercentile = null;
+
+    const pageText = document.body.innerText || '';
+    const runtimeMatch = pageText.match(/Runtime\s*[:：]?\s*([0-9]+\s*(?:ms|s))/i);
+    if (runtimeMatch) runtime = runtimeMatch[1];
+
+    const memoryMatch = pageText.match(/Memory\s*[:：]?\s*([0-9.]+\s*(?:MB|KB|GB))/i);
+    if (memoryMatch) memory = memoryMatch[1];
+
+    const beatsMatch = pageText.match(/Beats\s*([0-9.]+)%/i);
+    if (beatsMatch) runtimePercentile = parseFloat(beatsMatch[1]);
+
+    const code = await getCodeFromEditor();
+    if (!code || code.trim().length === 0) {
+      console.warn('[LeetCode Sync] Could not extract code from editor.');
+      return;
+    }
+
+    const lang = detectLanguage();
+    const payload = {
+      submissionId: `sync-${slug}-${Date.now()}`,
+      status: 'Accepted',
+      runtime: runtime || '4 ms',
+      runtimePercentile,
+      memory: memory || '14.2 MB',
+      memoryPercentile,
+      lang,
+      code,
+      slug
+    };
+
+    if (processedSubmissions.has(payload.submissionId)) return;
+    processedSubmissions.add(payload.submissionId);
+
+    console.log('[LeetCode Sync] Auto-triggering sync for:', payload);
+    await handleAcceptedSubmission(payload);
+  }
+
+  /**
+   * Extract code from Monaco editor or DOM
+   */
+  async function getCodeFromEditor() {
+    // 1. Monaco lines from DOM
+    const lines = document.querySelectorAll('.monaco-editor .view-line');
+    if (lines && lines.length > 0) {
+      const code = Array.from(lines).map(l => l.textContent).join('\n');
+      if (code.trim().length > 0) return code;
+    }
+
+    // 2. Request from inject.js
+    const fromInject = await new Promise(resolve => {
+      const handler = (e) => {
+        window.removeEventListener('LeetCodeSync:ResponseCode', handler);
+        resolve(e.detail?.code || '');
+      };
+      window.addEventListener('LeetCodeSync:ResponseCode', handler);
+      window.dispatchEvent(new CustomEvent('LeetCodeSync:RequestCode'));
+      setTimeout(() => {
+        window.removeEventListener('LeetCodeSync:ResponseCode', handler);
+        resolve('');
+      }, 400);
+    });
+
+    if (fromInject && fromInject.trim().length > 0) return fromInject;
+
+    // 3. Fallback textarea / code tag
+    const textarea = document.querySelector('textarea.inputarea');
+    if (textarea && textarea.value) return textarea.value;
+
+    return '';
+  }
+
+  /**
+   * Detect programming language from DOM or code
+   */
+  function detectLanguage() {
+    const buttons = Array.from(document.querySelectorAll('button, div[role="button"]'));
+    for (const btn of buttons) {
+      const text = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+      if (text === 'c++') return 'cpp';
+      if (text === 'python3' || text === 'python') return 'python3';
+      if (text === 'c#') return 'csharp';
+      if (text === 'go') return 'golang';
+      if (text === 'java') return 'java';
+      if (text === 'javascript') return 'javascript';
+      if (text === 'typescript') return 'typescript';
+      if (text === 'rust') return 'rust';
+    }
+
+    const code = document.querySelector('.monaco-editor')?.innerText || '';
+    if (code.includes('#include') || code.includes('vector<') || code.includes('std::')) return 'cpp';
+    if (code.includes('def ') || code.includes('import ') || code.includes('self.')) return 'python3';
+    if (code.includes('public class') || code.includes('System.out')) return 'java';
+    if (code.includes('function') || code.includes('const ') || code.includes('let ')) return 'javascript';
+
+    return 'python3';
+  }
 
   /**
    * Main handler for accepted submissions
    */
   async function handleAcceptedSubmission(submission) {
-    // Read extension settings
     const settings = await chrome.storage.local.get([
       'githubToken',
       'githubUsername',
@@ -61,8 +190,8 @@
     if (!token) {
       showToast({
         status: 'error',
-        title: 'LeetCode Sync Needs Setup',
-        message: 'GitHub Token is missing. Click the LeetCode Sync extension icon in your browser toolbar to connect.',
+        title: 'LeetCode Sync: Token Needed',
+        message: 'Please paste your GitHub Personal Access Token in the LeetCode Sync extension popup settings.',
         solutionNum: null,
         timeComplexity: null,
         spaceComplexity: null
@@ -70,6 +199,7 @@
       return;
     }
 
+    const username = settings.githubUsername || 'AyushSinha2210';
     const repoName = settings.repoName || 'Leetcode_Sync';
     const branch = settings.branch || 'main';
 

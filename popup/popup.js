@@ -54,6 +54,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Manual Sync Button
+  const manualSyncBtn = document.getElementById('manual-sync-btn');
+  const manualSyncText = document.getElementById('manual-sync-text');
+  const manualSyncSpinner = document.getElementById('manual-sync-spinner');
+
+  manualSyncBtn?.addEventListener('click', async () => {
+    manualSyncBtn.disabled = true;
+    manualSyncText.textContent = 'Syncing...';
+    manualSyncSpinner?.classList.remove('hidden');
+
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab || !tab.url || !tab.url.includes('leetcode.com/problems/')) {
+        alert('Please open an active LeetCode problem tab to sync.');
+        return;
+      }
+
+      await chrome.tabs.sendMessage(tab.id, { type: 'SYNC_CURRENT_PAGE' });
+      manualSyncText.textContent = '⚡ Solution Pushed!';
+      setTimeout(() => {
+        window.close();
+      }, 1200);
+    } catch (e) {
+      console.warn('Manual sync message error:', e);
+      alert('Could not trigger sync on tab. Please refresh the LeetCode tab once and try again.');
+    } finally {
+      manualSyncBtn.disabled = false;
+      manualSyncText.textContent = '⚡ Sync Current LeetCode Solution';
+      manualSyncSpinner?.classList.add('hidden');
+    }
+  });
+
   // Load existing settings
   const settings = await chrome.storage.local.get([
     'githubToken',
@@ -63,13 +95,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     'syncHistory'
   ]);
 
-  if (settings.githubToken) tokenInput.value = settings.githubToken;
-  if (settings.repoName) repoInput.value = settings.repoName;
-  if (settings.branch) branchInput.value = settings.branch;
+  const activeToken = settings.githubToken || '';
+  const activeUser = settings.githubUsername || 'AyushSinha2210';
+  const activeRepo = settings.repoName || 'Leetcode_Sync';
+  const activeBranch = settings.branch || 'main';
+
+  if (activeToken) tokenInput.value = activeToken;
+  repoInput.value = activeRepo;
+  branchInput.value = activeBranch;
 
   // Update UI with status and activity
-  updateConnectionBadge(settings.githubUsername, settings.repoName);
-  renderDashboard(settings.syncHistory || [], settings.githubUsername, settings.repoName);
+  updateConnectionBadge(activeToken ? activeUser : null, activeRepo);
+  renderDashboard(settings.syncHistory || [], activeUser, activeRepo);
 
   // Form submission: Save & Test Connection
   form.addEventListener('submit', async (e) => {

@@ -48,6 +48,7 @@
    */
   function emitAccepted(detail) {
     console.log('[LeetCode Sync] Accepted submission detected!', detail);
+    // Post message
     window.postMessage(
       {
         type: 'LEETCODE_SYNC_ACCEPTED',
@@ -55,7 +56,18 @@
       },
       '*'
     );
+    // Also dispatch custom DOM event
+    try {
+      window.dispatchEvent(new CustomEvent('LeetCodeSync:Accepted', { detail }));
+      document.dispatchEvent(new CustomEvent('LeetCodeSync:Accepted', { detail }));
+    } catch (e) {}
   }
+
+  // Allow content script to query current Monaco code on demand
+  window.addEventListener('LeetCodeSync:RequestCode', () => {
+    const code = getMonacoCode();
+    window.dispatchEvent(new CustomEvent('LeetCodeSync:ResponseCode', { detail: { code } }));
+  });
 
   // 1. Intercept window.fetch
   const originalFetch = window.fetch;

@@ -39,6 +39,17 @@
         "https://leetcode.cn/problems/*"
       ],
       "js": [
+        "scripts/inject.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://leetcode.com/problems/*",
+        "https://leetcode.cn/problems/*"
+      ],
+      "js": [
         "scripts/complexity.js",
         "scripts/github.js",
         "scripts/content.js"
