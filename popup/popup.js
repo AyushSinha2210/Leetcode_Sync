@@ -65,6 +65,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Content script not yet active on tab, inject programmatically
     }
 
+    // Check if chrome.scripting is available in the current extension runtime
+    if (!chrome.scripting || !chrome.scripting.executeScript) {
+      throw new Error('Permissions update needed: Please go to chrome://extensions and click the ↻ (Reload) icon on LeetCode Sync Pro, then refresh your LeetCode tab.');
+    }
+
     try {
       await chrome.scripting.insertCSS({
         target: { tabId },
