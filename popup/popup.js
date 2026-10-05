@@ -106,8 +106,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         repoName,
         branch
       });
-        geminiApiKey: geminiKey
-      });
 
       showAlert(`Connected successfully! Synced to ${username}/${repoName}`, 'success');
       updateConnectionBadge(username, repoName);
