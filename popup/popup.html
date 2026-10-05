@@ -120,29 +120,16 @@
           <input type="text" id="branch-name" value="main" placeholder="main" required>
         </div>
 
-        <!-- Gemini AI Settings -->
+        <!-- LeetCode Data Scraping Info -->
         <div class="form-section-title">
-          <span>AI Complexity Analysis (Gemini Flash)</span>
+          <span>Complexity Source (LeetCode Data)</span>
         </div>
-
-        <div class="form-group toggle-group">
-          <div class="toggle-text">
-            <label for="enable-ai-toggle">Enable AI Complexity Analysis</label>
-            <span class="input-hint">Uses Gemini Flash for high-precision Big-O reasoning.</span>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="enable-ai-toggle" checked>
-            <span class="slider round"></span>
-          </label>
-        </div>
-
-        <div id="ai-key-container" class="form-group">
-          <div class="label-row">
-            <label for="gemini-key">Gemini API Key (Optional)</label>
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="sublink">Get Free Key ↗</a>
-          </div>
-          <input type="password" id="gemini-key" placeholder="AIzaSy...">
-          <span class="input-hint">If empty, the built-in offline static complexity engine is used.</span>
+        <div class="guide-card" style="margin-bottom: 16px;">
+          <h4 style="display: flex; align-items: center; gap: 6px; color: var(--accent-emerald);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Scraped from LeetCode Data
+          </h4>
+          <p>No AI model or API key required. Time & Space complexity are automatically scraped directly from LeetCode's submission analysis and official problem solution data.</p>
         </div>
 
         <!-- Submit Button -->

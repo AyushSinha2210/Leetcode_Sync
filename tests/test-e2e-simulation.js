@@ -26,11 +26,12 @@ public:
     code: code1,
     lang: 'cpp',
     title: 'Two Sum',
-    useAI: false // test offline static analyzer
+    titleSlug: 'two-sum'
   });
   console.log('  Time Complexity: ', complexity1.timeComplexity);
   console.log('  Space Complexity:', complexity1.spaceComplexity);
   console.log('  Explanation:     ', complexity1.explanation);
+  console.log('  Source:          ', complexity1.source);
 
   // Generate Solution 1 file & header
   const file1 = GitHubSync.formatCodeWithHeader({
@@ -93,11 +94,12 @@ public:
     code: code2,
     lang: 'cpp',
     title: 'Two Sum',
-    useAI: false
+    titleSlug: 'two-sum'
   });
   console.log('  Time Complexity: ', complexity2.timeComplexity);
   console.log('  Space Complexity:', complexity2.spaceComplexity);
   console.log('  Explanation:     ', complexity2.explanation);
+  console.log('  Source:          ', complexity2.source);
 
   // Generate Solution 2 file & header
   const file2 = GitHubSync.formatCodeWithHeader({

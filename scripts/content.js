@@ -54,9 +54,7 @@
       'githubToken',
       'githubUsername',
       'repoName',
-      'branch',
-      'geminiApiKey',
-      'enableAI'
+      'branch'
     ]);
 
     const token = settings.githubToken;
@@ -74,32 +72,28 @@
 
     const repoName = settings.repoName || 'Leetcode-Sync';
     const branch = settings.branch || 'main';
-    const geminiApiKey = settings.geminiApiKey || '';
-    const enableAI = settings.enableAI !== false;
 
     // Show initial syncing HUD
     showToast({
       status: 'syncing',
       title: 'LeetCode Sync',
-      message: 'Analyzing complexity and preparing commit...',
+      message: 'Scraping complexity from LeetCode data...',
       solutionNum: '...',
-      timeComplexity: 'Calculating...',
-      spaceComplexity: 'Calculating...'
+      timeComplexity: 'Scraping...',
+      spaceComplexity: 'Scraping...'
     });
 
     try {
       // Fetch full question metadata from LeetCode GraphQL
       const questionMeta = await fetchQuestionMetadata(submission.slug);
 
-      // Analyze Time & Space Complexity
-      updateToastStatus('Analyzing time & space complexity...');
+      // Scrape Time & Space Complexity directly from LeetCode data
+      updateToastStatus('Extracting complexity from LeetCode submission & editorial...');
       const complexity = await ComplexityAnalyzer.analyze({
         code: submission.code,
         lang: submission.lang || 'python3',
         title: questionMeta.title || submission.slug,
-        difficulty: questionMeta.difficulty,
-        apiKey: geminiApiKey,
-        useAI: enableAI
+        titleSlug: submission.slug
       });
 
       // Update toast with analyzed complexity

@@ -15,14 +15,16 @@
   - Names the files `Solution_1`, `Solution_2`, `Solution_3`, etc.
   - Updates the problem's `README.md` with a solutions comparison table comparing **Time Complexity**, **Space Complexity**, **Runtime**, and **Memory** across all attempts.
 
-- ⏱️ **Time & Space Complexity Engine**  
-  Every submission is automatically analyzed for algorithmic complexity:
-  - **Dual-Engine Architecture**: Powered by **Google Gemini Flash** (ultra-precise AI Big-O reasoning) with an instant **Offline Static Analysis Heuristic Engine** fallback (zero configuration needed).
+- ⏱️ **Direct LeetCode Complexity Scraper (No Model / No API Keys)**  
+  Complexity is scraped directly from authentic LeetCode data:
+  - **Live Submission DOM Scraping**: Automatically clicks and scrapes LeetCode's on-screen **"Analyze Complexity"** feature directly from the submission panel.
+  - **Official Editorial Data Scraping**: Extracts verified Big-O Time & Space complexities from LeetCode's official problem solution articles via GraphQL.
+  - **Zero External AI Models**: No Gemini, OpenAI, or API keys needed.
   - Complexity is documented in:
     1. **Code file header**: Injected docstring comment at the top of the file.
-    2. **Problem `README.md`**: Solutions table.
-    3. **Git commit message**: e.g., `feat(0001-two-sum): add Solution 2 [Time: O(N), Space: O(N)]`.
-    4. **Live floating HUD Toast**: Sleek glassmorphism notification card on LeetCode web.
+    2. **Problem `README.md`**: Solutions comparison table.
+    3. **Git commit message**: e.g., `feat(0001-two-sum): add Solution 2 [Time: O(n), Space: O(n)]`.
+    4. **Live floating HUD Toast**: Notification card right on LeetCode web.
     5. **Extension Popup**: Activity feed with complexity pills.
 
 - 📊 **Automated Portfolio Dashboard**  
@@ -79,12 +81,9 @@ Leetcode_Sync/
 
 ---
 
-### Step 3 (Optional): AI Complexity Analysis with Gemini Flash
-- By default, the extension includes a built-in **Offline Static Analysis Engine** that detects loops, nested loops, binary search, sorting, and allocations automatically.
-- If you'd like deep algorithmic reasoning with **Google Gemini Flash**:
-  1. Get a free API key at [Google AI Studio](https://aistudio.google.com/app/apikey).
-  2. Paste it in the **Gemini API Key** field in the Settings tab.
-  3. Click **Save & Verify Connection**.
+### Step 3: Zero Configuration for Complexity
+- **No API keys or model setup required!**
+- The extension automatically scrapes the official Big-O Time & Space Complexity directly from LeetCode's submission analysis and official problem solution data.
 
 ---
 

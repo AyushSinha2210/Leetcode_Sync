@@ -27,9 +27,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const toggleTokenBtn = document.getElementById('toggle-token-visibility');
   const repoInput = document.getElementById('repo-name');
   const branchInput = document.getElementById('branch-name');
-  const enableAiToggle = document.getElementById('enable-ai-toggle');
-  const geminiKeyInput = document.getElementById('gemini-key');
-  const aiKeyContainer = document.getElementById('ai-key-container');
   const saveBtn = document.getElementById('save-btn');
   const saveBtnText = document.getElementById('save-btn-text');
   const saveSpinner = document.getElementById('save-spinner');
@@ -57,28 +54,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Toggle AI container visibility
-  enableAiToggle.addEventListener('change', () => {
-    aiKeyContainer.style.display = enableAiToggle.checked ? 'block' : 'none';
-  });
-
   // Load existing settings
   const settings = await chrome.storage.local.get([
     'githubToken',
     'githubUsername',
     'repoName',
     'branch',
-    'enableAI',
-    'geminiApiKey',
     'syncHistory'
   ]);
 
   if (settings.githubToken) tokenInput.value = settings.githubToken;
   if (settings.repoName) repoInput.value = settings.repoName;
   if (settings.branch) branchInput.value = settings.branch;
-  if (settings.geminiApiKey) geminiKeyInput.value = settings.geminiApiKey;
-  enableAiToggle.checked = settings.enableAI !== false;
-  aiKeyContainer.style.display = enableAiToggle.checked ? 'block' : 'none';
 
   // Update UI with status and activity
   updateConnectionBadge(settings.githubUsername, settings.repoName);
@@ -92,8 +79,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const token = tokenInput.value.trim();
     const repoName = repoInput.value.trim() || 'Leetcode-Sync';
     const branch = branchInput.value.trim() || 'main';
-    const enableAI = enableAiToggle.checked;
-    const geminiKey = geminiKeyInput.value.trim();
 
     if (!token) {
       showAlert('Please enter your GitHub Personal Access Token.', 'error');
@@ -114,30 +99,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       saveBtnText.textContent = 'Checking repository...';
       await GitHubSync.ensureRepo(token, username, repoName);
 
-      // 3. Test Gemini API if key provided
-      if (enableAI && geminiKey) {
-        saveBtnText.textContent = 'Verifying Gemini API key...';
-        try {
-          await ComplexityAnalyzer.analyze({
-            code: 'return a + b;',
-            lang: 'javascript',
-            title: 'Test',
-            apiKey: geminiKey,
-            useAI: true
-          });
-        } catch (aiErr) {
-          console.warn('[LeetCode Sync] Gemini test failed:', aiErr);
-          showAlert(`GitHub connected as @${username}, but Gemini API verification failed: ${aiErr.message}. Offline analyzer will be used instead.`, 'error');
-        }
-      }
-
       // Save to chrome.storage.local
       await chrome.storage.local.set({
         githubToken: token,
         githubUsername: username,
         repoName,
-        branch,
-        enableAI,
+        branch
+      });
         geminiApiKey: geminiKey
       });
 
