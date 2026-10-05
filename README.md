@@ -13,7 +13,7 @@
 
 | # | Problem | Difficulty | Latest Solution | Time Complexity | Space Complexity | Language |
 | :---: | :--- | :---: | :--- | :---: | :---: | :--- |
-| 0001 | [Two Sum](./0001-two-sum) | Easy | [Solution 1](./0001-two-sum/Solution_1.cpp) | `O(n)` | `O(n)` | cpp |
+| 0001 | [Two Sum](./0001-two-sum) | Easy | [Solution 2](./0001-two-sum/Solution_2.cpp) | `O(n)` | `O(n)` | cpp |
 
 ---
 *Created automatically by [LeetCode Sync](https://github.com).*
