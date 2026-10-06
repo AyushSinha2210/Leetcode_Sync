@@ -84,3 +84,4 @@ Example 2:**
 | Solution | Language | Time Complexity | Space Complexity | Runtime | Memory | Date Solved |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | [Solution 1](./Solution_1.cpp) | cpp | `O(N)` | `O(1)` | 4 ms | 14.2 MB | 2026-10-06 |
+| [Solution 2](./Solution_2.cpp) | cpp | `O(N)` | `O(1)` | 0 ms | 7.6 MB | 2026-10-06 |
