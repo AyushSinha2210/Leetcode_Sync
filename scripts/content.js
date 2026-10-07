@@ -706,7 +706,11 @@
     }
 
     const username = settings.githubUsername;
-    const repoName = (settings.repoName && settings.repoName !== 'Leetcode_Sync') ? settings.repoName : 'LeetCode-Solutions';
+    let repoName = settings.repoName;
+    if (!repoName || repoName.toLowerCase() === 'leetcode_sync') {
+      repoName = 'LeetCode-Solutions';
+      chrome.storage.local.set({ repoName: 'LeetCode-Solutions' }).catch(() => {});
+    }
     const branch = settings.branch || 'main';
     const folderPrefix = settings.folderPrefix || 'problems';
 

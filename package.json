@@ -1,0 +1,26 @@
+{
+  "name": "leetcode-sync-pro",
+  "version": "1.0.0",
+  "description": "Chrome Extension that syncs LeetCode solutions to a dedicated GitHub repository with Big-O complexity analysis and multi-solution versioning.",
+  "main": "scripts/background.js",
+  "scripts": {
+    "test": "node tests/validate-extension.js && node tests/test-popup-runtime.js && node tests/test-scraper.js",
+    "test:all": "node tests/validate-extension.js && node tests/test-popup-runtime.js && node tests/test-scraper.js && node tests/test-e2e-simulation.js",
+    "generate-icons": "node generate-icons.js"
+  },
+  "keywords": [
+    "leetcode",
+    "github-sync",
+    "chrome-extension",
+    "manifest-v3",
+    "algorithms",
+    "complexity-analysis",
+    "developer-tools"
+  ],
+  "author": "Ayush Sinha",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AyushSinha2210/Leetcode_Sync.git"
+  }
+}

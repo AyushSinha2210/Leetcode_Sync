@@ -178,9 +178,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const activeToken = settings.githubToken || '';
   const activeUser = settings.githubUsername || '';
-  const activeRepo = (settings.repoName && settings.repoName !== 'Leetcode_Sync') ? settings.repoName : 'LeetCode-Solutions';
+  const isDefaultOrOld = !settings.repoName || settings.repoName.toLowerCase() === 'leetcode_sync';
+  const activeRepo = isDefaultOrOld ? 'LeetCode-Solutions' : settings.repoName;
   const activeBranch = settings.branch || 'main';
   const activeFolderPrefix = settings.folderPrefix || 'problems';
+
+  if (isDefaultOrOld) {
+    chrome.storage.local.set({ repoName: 'LeetCode-Solutions' }).catch(() => {});
+  }
 
   if (activeToken) tokenInput.value = activeToken;
   repoInput.value = activeRepo;

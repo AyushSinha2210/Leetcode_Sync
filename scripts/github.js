@@ -367,6 +367,9 @@ ${solutionRow}
    * Update the repository's root README.md dashboard with overall solved statistics
    */
   async updateRootReadme(token, username, repoName, problemInfo, branch = 'main') {
+    if (!repoName || repoName.toLowerCase() === 'leetcode_sync') {
+      return; // Safety guard: never overwrite extension codebase README.md
+    }
     let rootReadmeSha = null;
     let rootReadmeContent = '';
 
@@ -544,6 +547,11 @@ ${updatedTable}
     if (!username) {
       const user = await this.getUser(token);
       username = user.login;
+    }
+
+    // Safety guard: Always push solutions to dedicated solutions repository, never the extension code repo
+    if (!repoName || repoName.toLowerCase() === 'leetcode_sync') {
+      repoName = 'LeetCode-Solutions';
     }
 
     onProgress?.('Verifying GitHub repository...');

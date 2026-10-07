@@ -37,3 +37,13 @@ desktop.ini
 .env
 .env.*
 !.env.example
+
+# Prevent solved problem outputs from polluting extension repo
+problems/
+0001-two-sum/
+Solution_*.cpp
+Solution_*.py
+Solution_*.java
+Solution_*.js
+Solution_*.ts
+
