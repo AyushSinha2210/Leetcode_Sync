@@ -148,11 +148,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       manualSyncText.textContent = `⚡ Pushed Solution ${response.solutionNum || 1}!`;
-      showAlert(`🎉 Successfully synced "${response.title || 'problem'}" (Solution ${response.solutionNum || 1}) to ${settings.githubUsername || 'AyushSinha2210'}/${settings.repoName || 'Leetcode_Sync'}!`, 'success');
+      showAlert(`🎉 Successfully synced "${response.title || 'problem'}" (Solution ${response.solutionNum || 1}) to ${settings.githubUsername || 'your repo'}/${settings.repoName || 'LeetCode-Solutions'}!`, 'success');
 
       // Refresh dashboard view with updated activity
       const { syncHistory = [] } = await chrome.storage.local.get('syncHistory');
-      renderDashboard(syncHistory, settings.githubUsername || 'AyushSinha2210', settings.repoName || 'Leetcode_Sync');
+      renderDashboard(syncHistory, settings.githubUsername || '', settings.repoName || 'LeetCode-Solutions');
 
     } catch (e) {
       console.warn('[LeetCode Sync] Manual sync message error:', e);
@@ -177,8 +177,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   ]);
 
   const activeToken = settings.githubToken || '';
-  const activeUser = settings.githubUsername || 'AyushSinha2210';
-  const activeRepo = settings.repoName || 'Leetcode_Sync';
+  const activeUser = settings.githubUsername || '';
+  const activeRepo = (settings.repoName && settings.repoName !== 'Leetcode_Sync') ? settings.repoName : 'LeetCode-Solutions';
   const activeBranch = settings.branch || 'main';
   const activeFolderPrefix = settings.folderPrefix || 'problems';
 
@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showAlert('', 'hidden');
 
     const token = tokenInput.value.trim();
-    const repoName = repoInput.value.trim() || 'Leetcode_Sync';
+    const repoName = repoInput.value.trim() || 'LeetCode-Solutions';
     const branch = branchInput.value.trim() || 'main';
     const folderPrefix = (folderPrefixInput?.value || 'problems').trim() || 'problems';
 
@@ -258,8 +258,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       statusText.textContent = `@${username}`;
       if (repoBanner && repoFullName && repoLink) {
         repoBanner.classList.remove('hidden');
-        repoFullName.textContent = `${username}/${repoName || 'Leetcode_Sync'}`;
-        repoLink.href = `https://github.com/${username}/${repoName || 'Leetcode_Sync'}`;
+        repoFullName.textContent = `${username}/${repoName || 'LeetCode-Solutions'}`;
+        repoLink.href = `https://github.com/${username}/${repoName || 'LeetCode-Solutions'}`;
       }
     } else {
       statusBadge.className = 'status-badge disconnected';

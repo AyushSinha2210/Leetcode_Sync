@@ -520,7 +520,7 @@ ${updatedTable}
   async pushSolution({
     token,
     username,
-    repoName = 'Leetcode_Sync',
+    repoName = 'LeetCode-Solutions',
     branch = 'main',
     folderPrefix = 'problems',
     code,

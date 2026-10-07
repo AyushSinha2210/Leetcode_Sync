@@ -14,9 +14,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   ]);
 
   const updates = {};
-  if (!existing.repoName) updates.repoName = 'Leetcode_Sync';
+  if (!existing.repoName || existing.repoName === 'Leetcode_Sync') updates.repoName = 'LeetCode-Solutions';
   if (!existing.branch) updates.branch = 'main';
-  if (!existing.githubUsername) updates.githubUsername = 'AyushSinha2210';
+  if (!existing.folderPrefix) updates.folderPrefix = 'problems';
   if (!existing.syncHistory) updates.syncHistory = [];
 
   if (Object.keys(updates).length > 0) {

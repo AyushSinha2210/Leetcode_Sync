@@ -705,8 +705,8 @@
       return;
     }
 
-    const username = settings.githubUsername || 'AyushSinha2210';
-    const repoName = settings.repoName || 'Leetcode_Sync';
+    const username = settings.githubUsername;
+    const repoName = (settings.repoName && settings.repoName !== 'Leetcode_Sync') ? settings.repoName : 'LeetCode-Solutions';
     const branch = settings.branch || 'main';
     const folderPrefix = settings.folderPrefix || 'problems';
 

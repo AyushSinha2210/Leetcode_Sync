@@ -22,7 +22,7 @@ global.chrome = {
       get: async (keys) => ({
         githubToken: 'ghp_mock_token',
         githubUsername: 'AyushSinha2210',
-        repoName: 'Leetcode_Sync',
+        repoName: 'LeetCode-Solutions',
         branch: 'main',
         syncHistory: []
       }),
