@@ -128,14 +128,19 @@ const GitHubSync = {
    * Check problem folder on GitHub and determine next solution index
    * (e.g. Solution 1, Solution 2, Solution 3...)
    */
-  async getNextSolutionNumber(token, username, repoName, folderName, branch = 'main') {
-    const res = await this.request(`/repos/${username}/${repoName}/contents/${folderName}?ref=${branch}`, token);
+  async getNextSolutionNumber(token, username, repoName, folderPath, branch = 'main') {
+    let res = await this.request(`/repos/${username}/${repoName}/contents/${folderPath}?ref=${branch}`, token);
     
-    if (res.status === 404) {
-      return { nextNum: 1, existingFiles: [], readmeSha: null, readmeContent: null };
+    // If not found in subfolder (e.g. problems/0001-two-sum), check if it was previously at root (0001-two-sum)
+    if (res.status === 404 && folderPath.includes('/')) {
+      const rootSlug = folderPath.split('/').pop();
+      const legacyRes = await this.request(`/repos/${username}/${repoName}/contents/${rootSlug}?ref=${branch}`, token);
+      if (legacyRes.ok) {
+        res = legacyRes;
+      }
     }
 
-    if (!res.ok) {
+    if (res.status === 404 || !res.ok) {
       return { nextNum: 1, existingFiles: [], readmeSha: null, readmeContent: null };
     }
 
@@ -151,7 +156,6 @@ const GitHubSync = {
     for (const file of files) {
       if (file.name.toLowerCase() === 'readme.md') {
         readmeSha = file.sha;
-        // Optionally fetch readme content
         try {
           const rRes = await this.request(file.url, token);
           if (rRes.ok) {
@@ -377,10 +381,11 @@ ${solutionRow}
       console.warn('[LeetCode Sync] Could not fetch root README.md:', e);
     }
 
-    const { frontendId, title, difficulty, folderName, solutionNum, timeComplexity, spaceComplexity, lang } = problemInfo;
+    const { frontendId, title, difficulty, folderName, folderPath, solutionNum, timeComplexity, spaceComplexity, lang } = problemInfo;
     const paddedId = String(frontendId || '0').padStart(4, '0');
-    const folderLink = `[${title}](./${folderName})`;
-    const solLink = `[Solution ${solutionNum}](./${folderName}/Solution_${solutionNum}.${LANG_CONFIG[lang.toLowerCase()]?.ext || 'txt'})`;
+    const targetFolder = folderPath || folderName;
+    const folderLink = `[${title}](./${targetFolder})`;
+    const solLink = `[Solution ${solutionNum}](./${targetFolder}/Solution_${solutionNum}.${LANG_CONFIG[lang.toLowerCase()]?.ext || 'txt'})`;
 
     let lines = rootReadmeContent ? rootReadmeContent.split('\n') : [];
     let problemRows = [];
@@ -517,6 +522,7 @@ ${updatedTable}
     username,
     repoName = 'Leetcode_Sync',
     branch = 'main',
+    folderPrefix = 'problems',
     code,
     lang,
     title,
@@ -543,22 +549,24 @@ ${updatedTable}
     onProgress?.('Verifying GitHub repository...');
     await this.ensureRepo(token, username, repoName);
 
-    // Format folder name: e.g. 0001-two-sum
+    // Format clean subfolder path: e.g. problems/0001-two-sum
     const paddedId = String(frontendId || '0').padStart(4, '0');
-    const folderName = `${paddedId}-${titleSlug || 'unknown-problem'}`;
+    const problemSlug = `${paddedId}-${titleSlug || 'unknown-problem'}`;
+    const cleanPrefix = (folderPrefix || 'problems').replace(/^\/+|\/+$/g, '');
+    const folderPath = cleanPrefix ? `${cleanPrefix}/${problemSlug}` : problemSlug;
 
     onProgress?.('Checking existing solutions...');
     const { nextNum, readmeSha, readmeContent } = await this.getNextSolutionNumber(
       token,
       username,
       repoName,
-      folderName,
+      folderPath,
       branch
     );
 
     const config = LANG_CONFIG[lang.toLowerCase()] || { ext: 'txt', commentType: 'block' };
     const filename = `Solution_${nextNum}.${config.ext}`;
-    const filePath = `${folderName}/${filename}`;
+    const filePath = `${folderPath}/${filename}`;
 
     // 1. Format code with complete docstring header
     const formattedCode = this.formatCodeWithHeader({
@@ -578,8 +586,8 @@ ${updatedTable}
       memoryPercentile
     });
 
-    onProgress?.(`Committing ${filename} to GitHub (Time: ${timeComplexity})...`);
-    const commitMsg = `feat(${folderName}): add Solution ${nextNum} [Time: ${timeComplexity}, Space: ${spaceComplexity}]`;
+    onProgress?.(`Committing ${filename} to ${folderPath}...`);
+    const commitMsg = `feat(${problemSlug}): add Solution ${nextNum} [Time: ${timeComplexity}, Space: ${spaceComplexity}]`;
     const commitResult = await this.commitFile(
       token,
       username,
@@ -613,9 +621,9 @@ ${updatedTable}
       token,
       username,
       repoName,
-      `${folderName}/README.md`,
+      `${folderPath}/README.md`,
       updatedProblemReadme,
-      `docs(${folderName}): update README with Solution ${nextNum} metrics`,
+      `docs(${problemSlug}): update README with Solution ${nextNum} metrics`,
       branch,
       readmeSha
     ).catch(e => console.warn('[LeetCode Sync] Folder README commit error (non-fatal):', e));
@@ -630,7 +638,8 @@ ${updatedTable}
         frontendId,
         title,
         difficulty,
-        folderName,
+        folderName: problemSlug,
+        folderPath,
         solutionNum: nextNum,
         timeComplexity,
         spaceComplexity,
@@ -644,7 +653,8 @@ ${updatedTable}
       solutionNum: nextNum,
       filename,
       filePath,
-      commitUrl: commitResult?.commit?.html_url || `https://github.com/${username}/${repoName}/tree/${branch}/${folderName}`,
+      folderPath,
+      commitUrl: commitResult?.commit?.html_url || `https://github.com/${username}/${repoName}/tree/${branch}/${folderPath}`,
       repoUrl: `https://github.com/${username}/${repoName}`
     };
   }

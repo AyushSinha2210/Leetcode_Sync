@@ -131,6 +131,13 @@
           <input type="text" id="branch-name" value="main" placeholder="main" required>
         </div>
 
+        <!-- Repository Folder / Directory Prefix -->
+        <div class="form-group">
+          <label for="folder-prefix">Solutions Folder</label>
+          <input type="text" id="folder-prefix" value="problems" placeholder="problems">
+          <span class="input-hint">Solutions are saved in <code>problems/XXXX-slug/</code> to keep your repo clean and uncluttered.</span>
+        </div>
+
         <!-- LeetCode Data Scraping Info -->
         <div class="form-section-title">
           <span>Complexity Source (LeetCode Data)</span>
@@ -159,8 +166,8 @@
         <h4>🚀 How It Works</h4>
         <ol class="guide-steps">
           <li><strong>Configure:</strong> Enter your GitHub Personal Access Token in the Settings tab.</li>
-          <li><strong>Solve:</strong> Open any problem on <a href="https://leetcode.com" target="_blank">LeetCode</a> and click <em>Submit</em>.</li>
-          <li><strong>Automatic Sync:</strong> When Accepted, the extension calculates Time & Space Complexity and commits the solution directly to your GitHub repo.</li>
+          <li><strong>Solve:</strong> Open any problem on <a href="https://leetcode.com" target="_blank">LeetCode</a> and submit your code.</li>
+          <li><strong>Grammarly-Style Sync:</strong> When Accepted, a floating sync badge pops up on your screen. Click it to preview Time & Space complexity and push Solution 1, Solution 2, etc. directly into your clean repository folder!</li>
         </ol>
       </div>
 

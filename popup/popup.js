@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const toggleTokenBtn = document.getElementById('toggle-token-visibility');
   const repoInput = document.getElementById('repo-name');
   const branchInput = document.getElementById('branch-name');
+  const folderPrefixInput = document.getElementById('folder-prefix');
   const saveBtn = document.getElementById('save-btn');
   const saveBtnText = document.getElementById('save-btn-text');
   const saveSpinner = document.getElementById('save-spinner');
@@ -116,7 +117,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         'githubToken',
         'githubUsername',
         'repoName',
-        'branch'
+        'branch',
+        'folderPrefix'
       ]);
 
       if (!settings.githubToken) {
@@ -170,6 +172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     'githubUsername',
     'repoName',
     'branch',
+    'folderPrefix',
     'syncHistory'
   ]);
 
@@ -177,10 +180,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const activeUser = settings.githubUsername || 'AyushSinha2210';
   const activeRepo = settings.repoName || 'Leetcode_Sync';
   const activeBranch = settings.branch || 'main';
+  const activeFolderPrefix = settings.folderPrefix || 'problems';
 
   if (activeToken) tokenInput.value = activeToken;
   repoInput.value = activeRepo;
   branchInput.value = activeBranch;
+  if (folderPrefixInput) folderPrefixInput.value = activeFolderPrefix;
 
   // Update UI with status and activity
   updateConnectionBadge(activeToken ? activeUser : null, activeRepo);
@@ -194,9 +199,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const token = tokenInput.value.trim();
     const repoName = repoInput.value.trim() || 'Leetcode_Sync';
     const branch = branchInput.value.trim() || 'main';
+    const folderPrefix = (folderPrefixInput?.value || 'problems').trim() || 'problems';
 
     if (!token) {
-      showAlert('Please enter your GitHub Personal Access Token.', 'error');
+      showAlert('Please enter your Personal Access Token.', 'error');
       return;
     }
 
@@ -219,7 +225,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         githubToken: token,
         githubUsername: username,
         repoName,
-        branch
+        branch,
+        folderPrefix
       });
 
       showAlert(`Connected successfully! Synced to ${username}/${repoName}`, 'success');

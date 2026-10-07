@@ -13,9 +13,8 @@
 
 | # | Problem | Difficulty | Latest Solution | Time Complexity | Space Complexity | Language |
 | :---: | :--- | :---: | :--- | :---: | :---: | :--- |
-| 0001 | [Two Sum](./0001-two-sum) | Easy | [Solution 2](./0001-two-sum/Solution_2.cpp) | `O(n)` | `O(n)` | cpp |
-| 0856 | [Score of Parentheses](./0856-score-of-parentheses) | Medium | [Solution 1](./0856-score-of-parentheses/Solution_1.cpp) | `O(2^N)` | `O(N)` | cpp |
-| 0921 | [Minimum Add to Make Parentheses Valid](./0921-minimum-add-to-make-parentheses-valid) | Medium | [Solution 3](./0921-minimum-add-to-make-parentheses-valid/Solution_3.cpp) | `O(N)` | `O(1)` | cpp |
+| 0856 | [Score of Parentheses](./problems/0856-score-of-parentheses) | Medium | [Solution 1](./problems/0856-score-of-parentheses/Solution_1.cpp) | `O(2^N)` | `O(N)` | cpp |
+| 0921 | [Minimum Add to Make Parentheses Valid](./problems/0921-minimum-add-to-make-parentheses-valid) | Medium | [Solution 3](./problems/0921-minimum-add-to-make-parentheses-valid/Solution_3.cpp) | `O(N)` | `O(1)` | cpp |
 
 ---
 *Created automatically by [LeetCode Sync](https://github.com).*
